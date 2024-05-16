@@ -5,10 +5,9 @@ const appRoutes = require('./routes');
 
 const app = express();
 
-
 app.use(cors({
-    origin: 'https://sendemailfrontend-4ptmyrfmv-vijays-projects-0aa0fd9a.vercel.app', // Adjust the port if necessary
-    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+    origin: 'https://sendemailfrontend-fbc25qqlb-vijays-projects-0aa0fd9a.vercel.app', 
+    credentials: true,
 }));
 
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
