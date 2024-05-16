@@ -7,7 +7,7 @@ const app = express();
 
 
 app.use(cors({
-    origin: 'http://localhost:5173', // Adjust the port if necessary
+    origin: 'https://sendemailfrontend-4ptmyrfmv-vijays-projects-0aa0fd9a.vercel.app', // Adjust the port if necessary
     credentials: true, // Allow credentials (cookies, authorization headers, etc.)
 }));
 
