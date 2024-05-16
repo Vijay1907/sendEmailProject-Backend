@@ -6,7 +6,7 @@ const appRoutes = require('./routes');
 const app = express();
 
 app.use(cors({
-    origin: 'https://sendemailfrontend-fbc25qqlb-vijays-projects-0aa0fd9a.vercel.app', 
+    origin: '*', // Allow requests from any origin
     credentials: true,
 }));
 
