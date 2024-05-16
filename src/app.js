@@ -7,7 +7,7 @@ const app = express();
 
 app.use(cors({
     origin: 'https://send-email-frontend.vercel.app', // Allow requests from any origin
-    // credentials: true,
+    credentials: true,
 }));
 
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
