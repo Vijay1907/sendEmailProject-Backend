@@ -33,68 +33,82 @@ router.post('/sendEmail', upload.array('files'), (req, res) => {
         console.log('Body:', req.body);
         console.log('Files:', req.files);
 
-        const { subject, message } = req.body
+        const { subject, message } = req.body;
+        const recipients = JSON.parse(req.body.emails); // Parse the array of recipient objects
 
-        let to = JSON.parse(req.body.emails); // Parse the string back into an array of email addresses
+        console.log(recipients , 'heyhghjghj')
 
         const attachments = req.files.map(file => ({
             filename: file.originalname,
             content: file.buffer
         }));
 
-        const mailOptions = {
-            from: 'ajayraj072001@gmail.com',
-            subject: subject,
-            text: message,
-            attachments: attachments
-        };
+        recipients.forEach(({ email, nickName }) => {
+            const personalizedMessage = `Dear ${nickName},\n\n${message}`;
 
-        to.forEach(recipient => {
-            const mailOpts = { ...mailOptions, to: recipient };
-            transporter.sendMail(mailOpts)
+            const mailOptions = {
+                from: 'ajayraj072001@gmail.com',
+                to: email,
+                subject: subject,
+                text: personalizedMessage,
+                attachments: attachments
+            };
+
+            transporter.sendMail(mailOptions)
                 .then(() => {
-                    console.log(`Email sent to ${recipient}`);
+                    console.log(`Email sent to ${email}`);
                 })
                 .catch(error => {
-                    console.error(`Error sending email to ${recipient}:`, error);
+                    console.error(`Error sending email to ${email}:`, error);
                 });
         });
 
         res.send({ message: 'Email sending process started in the background' });
     } catch (err) {
-        console.log('error11', err)
+        console.log('error11', err);
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-// router.post('/sendEmail', upload.single('attachment'), (req, res) => {
-//     console.log('hhjhj', req.body)
-//     let to = JSON.parse(req.body.to); // Parse the string back into an array of email addresses
-//     const attachment = {
-//         filename: req.file.originalname,
-//         content: req.file.buffer
-//     };
+// router.post('/sendEmail', upload.array('files'), (req, res) => {
+//     try {
+//         console.log('Body:', req.body);
+//         console.log('Files:', req.files);
 
-//     const mailOptions = {
-//         from: 'ajayraj072001@gmail.com',
-//         subject: "Happy Birthday Vishu.",
-//         text: "A very happy birthday. Lots of Love. May god give you the best groom",
-//         attachments: [attachment]
-//     };
+//         const { subject, message } = req.body
 
-//     to.forEach(recipient => {
-//         const mailOpts = { ...mailOptions, to: recipient };
-//         transporter.sendMail(mailOpts)
-//             .then(() => {
-//                 console.log(`Email sent to ${recipient}`);
-//             })
-//             .catch(error => {
-//                 console.error(`Error sending email to ${recipient}:`, error);
-//             });
-//     });
+//         let to = JSON.parse(req.body.emails); // Parse the string back into an array of email addresses
 
-//     res.send('Email sending process started in the background.');
+//         const attachments = req.files.map(file => ({
+//             filename: file.originalname,
+//             content: file.buffer
+//         }));
+
+//         const mailOptions = {
+//             from: 'ajayraj072001@gmail.com',
+//             subject: subject,
+//             text: message,
+//             attachments: attachments
+//         };
+
+//         to.forEach(recipient => {
+//             const mailOpts = { ...mailOptions, to: recipient };
+//             transporter.sendMail(mailOpts)
+//                 .then(() => {
+//                     console.log(`Email sent to ${recipient}`);
+//                 })
+//                 .catch(error => {
+//                     console.error(`Error sending email to ${recipient}:`, error);
+//                 });
+//         });
+
+//         res.send({ message: 'Email sending process started in the background' });
+//     } catch (err) {
+//         console.log('error11', err)
+//         res.status(500).json({ success: false, message: err.message });
+//     }
 // });
+
 
 router.post('/login', async (req, res) => {
     try {

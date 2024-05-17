@@ -6,7 +6,8 @@ const appRoutes = require('./routes');
 const app = express();
 
 app.use(cors({
-    origin: 'https://send-email-frontend.vercel.app', // Allow requests from any origin
+    origin: 'https://send-email-frontend.vercel.app', 
+    // origin: 'http://localhost:5173', 
     credentials: true,
 }));
 
