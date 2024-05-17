@@ -16,6 +16,7 @@ const { getFileUploader } = require('../middlewares/fileUpload');
 
 const nodemailer = require('nodemailer');
 const multer = require('multer');
+const Category = require('../models/category');
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -125,7 +126,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Generate JWT token
-        const token = jwt.sign({ _id: admin._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ _id: admin._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5d' } );
 
 
         res.status(200).json({ success: true, message: 'Login successfully', token: token });
@@ -232,7 +233,7 @@ router.put('/update_admin', authenticateAdmin, async (req, res) => {
 
 router.post('/create_user', authenticateAdmin, async (req, res) => {
     try {
-        const { email, name, nickName, address } = req.body
+        const { email, name, nickName, address,categoryId } = req.body
         const userExist = await User.findOne({ email })
 
         if (userExist) {
@@ -243,7 +244,8 @@ router.post('/create_user', authenticateAdmin, async (req, res) => {
             email,
             name,
             nickName,
-            address
+            address,
+            categoryId
         });
 
         res.status(201).json({ success: true, message: "User created successfully", data: newUser });
@@ -253,11 +255,43 @@ router.post('/create_user', authenticateAdmin, async (req, res) => {
     }
 });
 
+
+router.post('/create_category', authenticateAdmin, async (req, res) => {
+    try {
+        const {  categoryName } = req.body
+        const categoryExist = await Category.findOne({ categoryName })
+
+        if (categoryExist) {
+            res.status(400).send({ status: false, message: "Category already exist with this name" })
+        }
+
+        const newUser = await Category.create({
+            categoryName,
+        });
+
+        res.status(201).json({ success: true, message: "Category created successfully", data: newUser });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
 router.get('/dashboard', authenticateAdmin, async (req, res) => {
     try {
-        const users = await User.find();
+        const categories = await Category.find({});
+        const results = [];
+    
+        for (const category of categories) {
+          const count = await User.countDocuments({ categoryId: category._id });
+          results.push({
+            name: `Total ${category.categoryName.charAt(0).toUpperCase() + category.categoryName.slice(1)}`,
+            count: count,
+            _id:category._id,
+            categoryName:category.categoryName
+          });
+        }
         const clientsCount = await Client.count();
-        res.status(200).json({ users, usersCount: users.length, clientsCount: clientsCount });
+        res.status(200).json({ data:results, clientsCount: clientsCount });
     } catch (error) {
         console.error(error);
         res.status(500).json({
@@ -332,6 +366,19 @@ router.get('/get_clients', authenticateAdmin, async (req, res) => {
     try {
         const clients = await Client.find();
         res.status(200).json({ success: true, clients });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
+router.get('/get_users/:categoryId', authenticateAdmin, async (req, res) => {
+    try {
+        const {categoryId} = req.params
+        console.log("hiiiiiiiiiiiiii0",categoryId)
+       
+        const users = await User.find({categoryId});
+        res.status(200).json({ success: true, users });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: 'Internal server error.' });
