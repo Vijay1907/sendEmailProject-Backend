@@ -7,7 +7,11 @@ const user = new mongoose.Schema(
     name: { type: String, trim: true, default: '' },
     nickName: { type: String, trim: true, default: '' },
     address: { type: String, default: '' },
-    categoryId:{type:mongoose.Schema.Types.ObjectId,ref:"Category",required: true}
+    landLine: { type: String, },
+    phone: { type: String, unique: true },
+    displayMessage: { type: String, },
+
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true }
   },
   {
     timestamps: {

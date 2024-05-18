@@ -29,30 +29,42 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-router.post('/sendEmail', upload.array('files'), (req, res) => {
+router.post('/sendEmail', upload.single('file'), (req, res) => {
     try {
         console.log('Body:', req.body);
-        console.log('Files:', req.files);
+        console.log('File:', req.file); // Access the single file
 
         const { subject, message } = req.body;
         const recipients = JSON.parse(req.body.emails); // Parse the array of recipient objects
 
-        console.log(recipients , 'heyhghjghj')
+        console.log(recipients, 'heyhghjghj')
 
-        const attachments = req.files.map(file => ({
-            filename: file.originalname,
-            content: file.buffer
-        }));
+        const attachment = {
+            filename: req.file.originalname,
+            content: req.file.buffer,
+            cid: 'unique@nodemailer.com' // define unique content id
+        };
+
+        // const embeddedImage = `<img src="cid:${attachment.cid}" alt="Embedded Image"/>`;
 
         recipients.forEach(({ email, nickName }) => {
-            const personalizedMessage = `Dear ${nickName},\n\n${message}`;
+            // const personalizedMessage = `Dear ${nickName},\n\n${message}\n\n${embeddedImage}`;
+
+            const personalizedMessage = `
+            <p>Dear ${nickName},</p>
+        <p>${message}</p><br><br><br>
+        <div style="text-align: center;">
+        <img src="cid:${attachment.cid}" alt="Embedded Image" style="display: block; width: 100%; height: auto;">
+    </div>
+    <div style="height: 20px;"></div>   
+        `;
 
             const mailOptions = {
                 from: 'ajayraj072001@gmail.com',
                 to: email,
                 subject: subject,
-                text: personalizedMessage,
-                attachments: attachments
+                html: personalizedMessage,
+                attachments: [attachment] // Attach single file as attachment
             };
 
             transporter.sendMail(mailOptions)
@@ -126,7 +138,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Generate JWT token
-        const token = jwt.sign({ _id: admin._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5d' } );
+        const token = jwt.sign({ _id: admin._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5d' });
 
 
         res.status(200).json({ success: true, message: 'Login successfully', token: token });
@@ -233,7 +245,7 @@ router.put('/update_admin', authenticateAdmin, async (req, res) => {
 
 router.post('/create_user', authenticateAdmin, async (req, res) => {
     try {
-        const { email, name, nickName, address,categoryId } = req.body
+        const { email, name, nickName, address, categoryId, landLine, phone, displayMessage } = req.body
         const userExist = await User.findOne({ email })
 
         if (userExist) {
@@ -245,7 +257,10 @@ router.post('/create_user', authenticateAdmin, async (req, res) => {
             name,
             nickName,
             address,
-            categoryId
+            categoryId,
+            landLine,
+            phone,
+            displayMessage
         });
 
         res.status(201).json({ success: true, message: "User created successfully", data: newUser });
@@ -258,7 +273,7 @@ router.post('/create_user', authenticateAdmin, async (req, res) => {
 
 router.post('/create_category', authenticateAdmin, async (req, res) => {
     try {
-        const {  categoryName } = req.body
+        const { categoryName } = req.body
         const categoryExist = await Category.findOne({ categoryName })
 
         if (categoryExist) {
@@ -275,23 +290,35 @@ router.post('/create_category', authenticateAdmin, async (req, res) => {
         res.status(500).json({ success: false, message: 'Internal server error.' });
     }
 });
+router.delete('/delete_category/:categoryId', authenticateAdmin, async (req, res) => {
+    try {
+        const { categoryId } = req.params
+        await Category.findByIdAndDelete(categoryId)
+
+
+        res.status(201).json({ success: true, message: "Category deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
 
 router.get('/dashboard', authenticateAdmin, async (req, res) => {
     try {
         const categories = await Category.find({});
         const results = [];
-    
+
         for (const category of categories) {
-          const count = await User.countDocuments({ categoryId: category._id });
-          results.push({
-            name: `Total ${category.categoryName.charAt(0).toUpperCase() + category.categoryName.slice(1)}`,
-            count: count,
-            _id:category._id,
-            categoryName:category.categoryName
-          });
+            const count = await User.countDocuments({ categoryId: category._id });
+            results.push({
+                name: `Total ${category.categoryName.charAt(0).toUpperCase() + category.categoryName.slice(1)}`,
+                count: count,
+                _id: category._id,
+                categoryName: category.categoryName
+            });
         }
         const clientsCount = await Client.count();
-        res.status(200).json({ data:results, clientsCount: clientsCount });
+        res.status(200).json({ data: results, clientsCount: clientsCount });
     } catch (error) {
         console.error(error);
         res.status(500).json({
@@ -372,12 +399,22 @@ router.get('/get_clients', authenticateAdmin, async (req, res) => {
     }
 });
 
+// router.get('/get_categories', authenticateAdmin, async (req, res) => {
+//     try {
+//         const clients = await Category.find();
+//         res.status(200).json({ success: true, clients });
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ success: false, message: 'Internal server error.' });
+//     }
+// });
+
 router.get('/get_users/:categoryId', authenticateAdmin, async (req, res) => {
     try {
-        const {categoryId} = req.params
-        console.log("hiiiiiiiiiiiiii0",categoryId)
-       
-        const users = await User.find({categoryId});
+        const { categoryId } = req.params
+        console.log("hiiiiiiiiiiiiii0", categoryId)
+
+        const users = await User.find({ categoryId });
         res.status(200).json({ success: true, users });
     } catch (error) {
         console.error(error);
