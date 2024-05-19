@@ -138,7 +138,7 @@ router.post('/login', async (req, res) => {
         }
 
         // Generate JWT token
-        const token = jwt.sign({ _id: admin._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5d' });
+        const token = jwt.sign({ _id: admin._id }, process.env.ACCESS_TOKEN_SECRET);
 
 
         res.status(200).json({ success: true, message: 'Login successfully', token: token });
@@ -294,6 +294,7 @@ router.delete('/delete_category/:categoryId', authenticateAdmin, async (req, res
     try {
         const { categoryId } = req.params
         await Category.findByIdAndDelete(categoryId)
+        await User.deleteMany({ categoryId })
 
 
         res.status(201).json({ success: true, message: "Category deleted successfully" });
